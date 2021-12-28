@@ -1,0 +1,34 @@
+[#purpose]
+=== Purpose
+
+This specification defines a set of Java APIs and behavioral contracts
+for:
+
+ * a <<component_developer>> to use in order to:
+
+ ** <<environment_model_acquisition,acquire>> Java objects from
+    <<environment,environments>>
+
+ ** advertise the
+    <<configuration,configuration>> her <<component,component>> needs
+
+ * an <<application_assembler>> to use in order to
+   <<disambiguation,disambiguate>> <<component_concern,component
+   concerns>> while <<assemble,assembling>> an
+   <<application,application>> for <<deploy,deployment>>
+
+ * an <<infrastructure_developer>> to use in order to adapt a
+   <<configuration_system,configuration system>> to a conforming
+   implementation of this specification
+
+ * a <<configuration_author>> to use in order to discover and create
+   proper <<configuration,configurations>> for a given
+   <<deploy,deployment>> of an <<application,application>> into an
+   <<environment,environment>> containing those
+   <<configuration,configurations>>
+
+These APIs and contracts cleanly separate <<component,components>> and
+<<application,applications>> from the <<environment,environments>>
+into which they might be <<deploy,deployed>>.  They also separate the
+consumption of <<configuration,configurations>> and other
+<<environment,environmental>> objects from their production.

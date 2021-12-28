@@ -1,0 +1,7 @@
+*.class
+*~
+NOTES.org
+nbactions.xml
+src/site/markdown/*.html
+target/
+weld-probe-export.zip

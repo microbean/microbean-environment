@@ -1,0 +1,15 @@
+[#interfaces]
+== Interfaces
+
+=== The `Loader` Interface
+
+The `org.microbean.environment.api.Loader` interface represents the
+<<environment_loader,environment loader>> concept, and helps to
+implement the <<environment_model_acquisition>> and
+<<named_object_acquisition>> use cases.
+
+==== The Bootstrap `loader()` Method
+
+`Loader` defines a `static` `loader()` method that bootstraps the
+system defined by this specification.
+
