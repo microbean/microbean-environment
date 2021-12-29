@@ -884,15 +884,17 @@ public interface Loader<T> extends OptionalSupplier<T> {
 
 
   /**
-   * Returns a non-{@code null} {@linkplain #root() root} {@link
+   * Returns a non-{@code null} {@linkplain #isRoot() root} {@link
    * Loader} that can be used to acquire environmental objects.
    *
-   * <p>The {@linkplain #root() root} {@link Loader} is located
-   * using the {@link ServiceLoader}.  The first of all discovered
-   * {@link Loader} instances is used and all others are ignored.</p>
+   * <p>First, a <em>bootstrap {@link Loader}</em> is located using
+   * the {@link ServiceLoader}.  The first of all discovered {@link
+   * Loader} instances is used and all others are ignored.  Note that
+   * the {@link ServiceLoader} discovery process is
+   * non-deterministic.</p>
    *
-   * <p>The {@link Loader} that is loaded via this mechanism is
-   * subject to the following restrictions:</p>
+   * <p>The bootstrap {@link Loader} that is loaded via this mechanism
+   * is subject to the following restrictions:</p>
    *
    * <ul>
    *
@@ -913,14 +915,14 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * </ul>
    *
-   * <p>That <em>bootstrap</em> instance is then used to find the
-   * "real" {@link Loader} implementation, which in most cases is
-   * simply itself.</p>
+   * <p>This bootstrap {@link Loader} is then used to {@linkplain
+   * #load(TypeToken) find} the "real" {@link Loader} implementation,
+   * which in most cases is simply itself.</p>
    *
-   * <p>The {@link Loader} that is supplied by the bootstrap
-   * instance is subject to the following restrictions (which are
-   * compatible with the instance's being the bootstrap instance
-   * itself):</p>
+   * <p>The {@link Loader} that is thus {@linkplain #load(TypeToken)
+   * supplied} by the bootstrap {@link Loader} is subject to the
+   * following restrictions (which are compatible with the {@link
+   * Loader}'s being the bootstrap {@link Loader} itself):</p>
    *
    * <ul>
    *
@@ -928,7 +930,7 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * #absolutePath()} implementation that is equal to {@link
    * Path#root() Path.root()}.</li>
    *
-   * <li>It must return the bootstrap instance from its {@link
+   * <li>It must return the bootstrap {@link Loader} from its {@link
    * #parent()} implementation.</li>
    *
    * <li>It must return a {@link Loader} implementation, normally
@@ -938,11 +940,14 @@ public interface Loader<T> extends OptionalSupplier<T> {
    *
    * <p>This is the entry point for end users of this framework.</p>
    *
-   * @return a non-{@code null} {@linkplain #root() root} {@link
+   * @return a non-{@code null} {@linkplain #isRoot() root} {@link
    * Loader} that can be used to acquire environmental objects
    *
    * @exception IllegalStateException if any of the restrictions above
    * is violated
+   *
+   * @exception java.util.ServiceConfigurationError if the bootstrap
+   * {@link Loader} could not be loaded for any reason
    */
   @EntryPoint
   @SuppressWarnings("static")
