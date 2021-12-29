@@ -40,7 +40,6 @@ import org.microbean.development.annotation.Experimental;
 import org.microbean.environment.api.Loader;
 import org.microbean.environment.api.Path;
 import org.microbean.environment.api.Path.Element;
-import org.microbean.environment.api.Qualified;
 import org.microbean.environment.api.Qualifiers;
 
 import org.microbean.environment.provider.AmbiguityHandler;
@@ -49,12 +48,12 @@ import org.microbean.environment.provider.Provider;
 import org.microbean.environment.provider.Value;
 
 /**
- * A subclassable default {@link Loader} implementation that
- * delegates its work to {@link Provider}s and an {@link
- * #ambiguityHandler() AmbiguityHandler}.
+ * A subclassable default {@link Loader} implementation that delegates
+ * its work to {@link Provider}s and an {@link #ambiguityHandler()
+ * AmbiguityHandler}.
  *
- * @param <T> the type of configured objects this {@link Environment}
- * supplies
+ * @param <T> the type of configured objects this {@link
+ * DefaultLoader} supplies
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
@@ -63,7 +62,7 @@ import org.microbean.environment.provider.Value;
  *
  * @see Provider
  */
-public class Environment<T> implements AutoCloseable, Loader<T> {
+public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
 
 
   private static final ThreadLocal<Map<Path<?>, Deque<Provider>>> currentProviderStacks = ThreadLocal.withInitial(() -> new HashMap<>(7));
@@ -75,13 +74,13 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
 
 
   // Package-private for testing only.
-  final ConcurrentMap<Qualified<Path<?>>, Environment<?>> environmentCache;
+  final ConcurrentMap<Qualified<Path<?>>, DefaultLoader<?>> loaderCache;
 
   private final boolean deterministic;
   
   private final Path<T> absolutePath;
 
-  private final Environment<?> parent;
+  private final DefaultLoader<?> parent;
 
   private final Supplier<T> supplier;
 
@@ -98,7 +97,7 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
 
 
   /**
-   * Creates a new {@link Environment}.
+   * Creates a new {@link DefaultLoader}.
    *
    * @see org.microbean.environment.api.Loader#loader()
    *
@@ -106,8 +105,8 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
    * {@link ServiceLoader java.util.ServiceLoader} instances only.
    */
   @Deprecated // intended for use by subclasses and java.util.ServiceLoader only
-  public Environment() {
-    this(new ConcurrentHashMap<Qualified<Path<?>>, Environment<?>>(),
+  public DefaultLoader() {
+    this(new ConcurrentHashMap<Qualified<Path<?>>, DefaultLoader<?>>(),
          null, // providers
          null, // Qualifiers
          true, // deterministic
@@ -117,16 +116,16 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
          null); // AmbiguityHandler
   }
 
-  private Environment(final ConcurrentMap<Qualified<Path<?>>, Environment<?>> environmentCache,
-                   final Collection<? extends Provider> providers,
-                   final Qualifiers qualifiers,
-                   final boolean deterministic,
-                   final Environment<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
-                   final Path<T> absolutePath,
-                   final Supplier<T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
-                   final AmbiguityHandler ambiguityHandler) {
+  private DefaultLoader(final ConcurrentMap<Qualified<Path<?>>, DefaultLoader<?>> loaderCache,
+                        final Collection<? extends Provider> providers,
+                        final Qualifiers qualifiers,
+                        final boolean deterministic,
+                        final DefaultLoader<?> parent, // if null, will end up being "this" if absolutePath is null or Path.root()
+                        final Path<T> absolutePath,
+                        final Supplier<T> supplier, // if null, will end up being () -> this if absolutePath is null or Path.root()
+                        final AmbiguityHandler ambiguityHandler) {
     super();
-    this.environmentCache = Objects.requireNonNull(environmentCache, "environmentCache");
+    this.loaderCache = Objects.requireNonNull(loaderCache, "loaderCache");
     if (parent == null) {
       // Bootstrap case, i.e. the zero-argument constructor called us.
       // Pay attention.
@@ -139,7 +138,7 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
         this.supplier = supplier == null ? this::returnThis : supplier; // NOTE
         this.providers = List.copyOf(providers == null ? loadedProviders() : providers);
         final Qualified<Path<?>> qp = new Qualified<>(Qualifiers.of(), Path.root());
-        this.environmentCache.put(qp, this); // NOTE
+        this.loaderCache.put(qp, this); // NOTE
         // While the following call is in effect, our
         // final-but-as-yet-uninitialized qualifiers field and our
         // final-but-as-yet-uninitialized ambiguityHandler field will
@@ -148,9 +147,9 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
         // and the ambiguityHandler() instance method does as well.
         try {
           this.qualifiers = this.load(Qualifiers.class).orElseGet(Qualifiers::of);
-          this.ambiguityHandler = this.load(AmbiguityHandler.class).orElseGet(Environment::loadedAmbiguityHandler);
+          this.ambiguityHandler = this.load(AmbiguityHandler.class).orElseGet(DefaultLoader::loadedAmbiguityHandler);
         } finally {
-          this.environmentCache.remove(qp);
+          this.loaderCache.remove(qp);
         }
       } else {
         throw new IllegalArgumentException("!absolutePath.equals(Path.root()): " + absolutePath);
@@ -179,9 +178,9 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
 
 
   /**
-   * Clears any caches used by this {@link Environment}.
+   * Clears any caches used by this {@link DefaultLoader}.
    *
-   * <p>This {@link Environment} remains valid to use.</p>
+   * <p>This {@link DefaultLoader} remains valid to use.</p>
    *
    * @threadsafety This method is safe for concurrent use by multiple
    * threads.
@@ -192,21 +191,21 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
   @Experimental
   @Override // AutoCloseable
   public final void close() {
-    this.environmentCache.clear();
+    this.loaderCache.clear();
   }
 
   /**
    * Returns an {@linkplain
    * java.util.Collections#unmodifiableCollection(Collection)
    * unmodifiable} {@link Collection} of {@link Provider}s that this
-   * {@link Environment} will use to supply objects.
+   * {@link DefaultLoader} will use to supply objects.
    *
    * <p>This method never returns {@code null}.</p>
    *
    * @return an {@linkplain
    * java.util.Collections#unmodifiableCollection(Collection)
    * unmodifiable} {@link Collection} of {@link Provider}s that this
-   * {@link Environment} will use to supply objects; never {@code null}
+   * {@link DefaultLoader} will use to supply objects; never {@code null}
    *
    * @nullability This method never returns {@code null}.
    *
@@ -221,12 +220,12 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
 
   /**
    * Returns the {@link AmbiguityHandler} associated with this {@link
-   * Environment}.
+   * DefaultLoader}.
    *
    * <p>This method never returns {@code null}.</p>
    *
    * @return the {@link AmbiguityHandler} associated with this {@link
-   * Environment}; never {@code null}
+   * DefaultLoader}; never {@code null}
    *
    * @nullability This method never returns {@code null}
    *
@@ -249,12 +248,12 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
   }
 
   /**
-   * Returns the {@link Qualifiers} with which this {@link Environment}
+   * Returns the {@link Qualifiers} with which this {@link DefaultLoader}
    * is associated.
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the {@link Qualifiers} with which this {@link Environment}
+   * @return the {@link Qualifiers} with which this {@link DefaultLoader}
    * is associated
    *
    * @nullability This method never returns {@code null}.
@@ -276,17 +275,17 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
   }
 
   /**
-   * Returns the {@link Environment} serving as the parent of this
-   * {@link Environment}.
+   * Returns the {@link DefaultLoader} serving as the parent of this
+   * {@link DefaultLoader}.
    *
-   * <p>The "root" {@link Environment} returns itself from its {@link
-   * #parent()} implementation.</p>
+   * <p>The "root" {@link DefaultLoader} returns itself from its
+   * {@link #parent()} implementation.</p>
    *
    * <p>This method never returns {@code null}.</p>
    *
-   * @return the non-{@code null} {@link Environment} serving as the
-   * parent of this {@link Environment}; may be this {@link Environment}
-   * itself
+   * @return the non-{@code null} {@link DefaultLoader} serving as the
+   * parent of this {@link DefaultLoader}; may be this {@link
+   * DefaultLoader} itself
    *
    * @nullability This method never returns {@code null}.
    *
@@ -297,7 +296,7 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
    */
   // Note that the root will have itself as its parent.
   @Override // Loader<T>
-  public final Environment<?> parent() {
+  public final DefaultLoader<?> parent() {
     return this.parent;
   }
 
@@ -316,19 +315,19 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
   }
 
   @Override // Loader<T>
-  public final Environment<?> loaderFor(Path<?> path) {
-    return (Environment<?>)Loader.super.loaderFor(path);
+  public final DefaultLoader<?> loaderFor(Path<?> path) {
+    return (DefaultLoader<?>)Loader.super.loaderFor(path);
   }
 
   @Override // Loader<T>
-  public final <U> Environment<U> load(final Path<U> path) {
+  public final <U> DefaultLoader<U> load(final Path<U> path) {
     final Path<U> absolutePath = this.normalize(path);
     if (!absolutePath.isAbsolute()) {
       throw new IllegalArgumentException("!normalize(path).isAbsolute(): " + absolutePath);
     } else if (absolutePath.isRoot()) {
       throw new IllegalArgumentException("normalize(path).isRoot(): " + absolutePath);
     }
-    final Environment<?> requestor = this.loaderFor(absolutePath);
+    final DefaultLoader<?> requestor = this.loaderFor(absolutePath);
     // We deliberately do not use computeIfAbsent() because load()
     // operations can kick off other load() operations, and then you'd
     // have a cache mutating operation occuring within a cache
@@ -340,19 +339,19 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
     // This obviously can result in unnecessary work, but most
     // configuration use cases will cause this work to happen anyway.
     final Qualified<Path<?>> qp = new Qualified<>(requestor.qualifiers(), absolutePath);
-    Environment<?> environment = this.environmentCache.get(qp);
+    DefaultLoader<?> environment = this.loaderCache.get(qp);
     if (environment == null) {
-      environment = this.environmentCache.putIfAbsent(qp, this.computeEnvironment(requestor, absolutePath));
+      environment = this.loaderCache.putIfAbsent(qp, this.computeLoader(requestor, absolutePath));
       if (environment == null) {
-        environment = this.environmentCache.get(qp);
+        environment = this.loaderCache.get(qp);
       }
     }
     @SuppressWarnings("unchecked")
-    final Environment<U> returnValue = (Environment<U>)environment;
+    final DefaultLoader<U> returnValue = (DefaultLoader<U>)environment;
     return returnValue;
   }
 
-  private final <U> Environment<U> computeEnvironment(final Environment<?> requestor, final Path<U> absolutePath) {
+  private final <U> DefaultLoader<U> computeLoader(final DefaultLoader<?> requestor, final Path<U> absolutePath) {
     final Qualifiers qualifiers = requestor.qualifiers();
     final AmbiguityHandler ambiguityHandler = requestor.ambiguityHandler();
     Value<U> candidate = null;
@@ -500,21 +499,21 @@ public class Environment<T> implements AutoCloseable, Loader<T> {
     final Supplier<U> supplier;
     final boolean deterministic;
     if (candidate == null) {
-      supplier = Environment::throwNoSuchElementException;
+      supplier = DefaultLoader::throwNoSuchElementException;
       deterministic = true;
     } else {
       supplier = candidate;
       deterministic = candidate.deterministic();
     }
     return
-      new Environment<>(this.environmentCache,
-                     providers,
-                     qualifiers,
-                     deterministic,
-                     requestor, // parent
-                     absolutePath,
-                     supplier,
-                     ambiguityHandler);
+      new DefaultLoader<>(this.loaderCache,
+                          providers,
+                          qualifiers,
+                          deterministic,
+                          requestor, // parent
+                          absolutePath,
+                          supplier,
+                          ambiguityHandler);
   }
 
   @SuppressWarnings("unchecked")

@@ -43,9 +43,9 @@ final class TestProvider {
 
   @Test
   final void testLoadedProviders() {
-    final Collection<Provider> ps = Environment.loadedProviders();
-    assertSame(ps, Environment.loadedProviders());
-    assertSame(ps, Environment.loadedProviders());
+    final Collection<Provider> ps = DefaultLoader.loadedProviders();
+    assertSame(ps, DefaultLoader.loadedProviders());
+    assertSame(ps, DefaultLoader.loadedProviders());
   }
 
 }

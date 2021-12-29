@@ -38,10 +38,10 @@ Consider a hypothetical method invocation from a
 <<component,component>>:
 [source,java]
 ----
-final Frobnicator f = gorp.getFrobnicator("special");
+final Frobnicator f = gorp.getFrobnicator("special"); // <1>
 ----
-The <<pathspace,pathspace>> governing "`special`" in this example is
-that of the invoker of the `getFrobnicator("special")` method.
+<1> The <<pathspace,pathspace>> governing `special` is that of the
+invoker of the `getFrobnicator("special")` method.
 
 Now consider another hypothetical method invocation from another
 <<component,component>>:
@@ -53,7 +53,7 @@ If `gorp` and `floo` access <<configuration,configuration>> based on
 the name they are supplied, there could be clashing
 <<component_concern,component concerns>>. An
 <<application_assembler,application assembler>> would have to somehow
-resolve the conflicting facts that in the first example "`special`"
+resolve the conflicting facts that in the first example `special`
 refers to a particular kind of `Frobnicator`, and in the second
 example "`special`" refers to a particular kind of `Caturgiator`.
 ****
@@ -98,10 +98,16 @@ A <<configuration,configuration>> belongs to one and only one
 [#determinism]
 === Determinism
 
-A non-`null` `java.util.Supplier` instance is said to be
-_deterministic_ if and only if repeated invocations of its `get()`
-method on any thread yield Java objects that are guaranteed to be
-identical to one another.
+A method is said to be _deterministic_ if, given the same inputs, it
+will return the same outputs across invocations.
+
+In this specification, determinism is most relevant when discussed in
+the context of a given `java.util.Supplier` instance.
+
+A non-`null` `java.util.Supplier` instance is said to be deterministic
+if and only if repeated invocations of its `get()` method on any
+thread yield Java objects that are guaranteed to be identical to one
+another.
 
 NOTE: A `Supplier` whose `get()` implementation always returns `null`
 is deterministic, though it produces a value that is
@@ -118,22 +124,29 @@ This specification makes a distinction between notional
  * Permanently present in the manner of a singleton, but perhaps one
    whose internal state may change over time
 
- * Permanently absent, indicating that there simply is no such value
+ * Permanently absent, indicating that there simply is no such value,
+   and never can or will be
 
 In general, regarding the Java objects discussed in this
 specification:
 
- * A currently present (or currently absent) object is represented by
-   a non-`null` instance of `java.util.Supplier`.  The actual
-   underlying value may be requested by invoking its `get()` method.
-   The `Supplier` may or may not be <<determinism,deterministic>>.
+ * A currently present (or currently absent) object not known to be
+   permanently present is usually represented by a non-`null` instance
+   of `java.util.Supplier`.  The actual underlying value may be
+   requested by invoking its `get()` method.  The `Supplier` may or
+   may not be <<determinism,deterministic>>.
 
- * A permanently present object is represented by the object itself.
-   Its internal state may or may not change over time, and its
-   accessor methods (its "getters") may or may not reflect such
-   changes.
+ * A permanently present object is represented by the object itself,
+   or somewhat indirectly by a `java.util.Supplier` whose `get()`
+   method is known to be <<determinism,deterministic>> and known to
+   never return `null`.  A permanently present object's internal state
+   may or may not change over time, and its accessor methods (its
+   "getters") may or may not reflect such changes.
 
  * A permanently absent object is represented by `null`.
++
+TIP: The method that returns a permanently absent object (`null`) is
+therefore <<determinism,deterministic>>.
 
 [#morphology]
 === Morphology

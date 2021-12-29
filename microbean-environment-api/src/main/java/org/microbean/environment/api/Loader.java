@@ -51,6 +51,9 @@ import org.microbean.environment.api.Path.Element;
  * @see OptionalSupplier#get()
  *
  * @see #load(Path)
+ *
+ * @see <a href="{@docRoot}/doc-files/spec/spec.html">microBean™
+ * Environment Specification</a>
  */
 public interface Loader<T> extends OptionalSupplier<T> {
 

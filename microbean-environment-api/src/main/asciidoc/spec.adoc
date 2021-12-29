@@ -1,6 +1,7 @@
 = microBean™ Environment Specification
 Laird Nelson
 0.0.0, {docdate}: DRAFT
+:icons: font
 :imagesdir: images
 :license: asl2
 :nofooter:

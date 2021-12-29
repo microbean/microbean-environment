@@ -26,7 +26,7 @@ import org.microbean.environment.api.Path;
  * {@link Loader} implementation to return.
  *
  * <p>{@link Provider} instances are subordinate to {@link
- * org.microbean.environment.Environment}.</p>
+ * org.microbean.environment.DefaultLoader}.</p>
  *
  * <p>Any {@link Provider} implementation must have a {@code public}
  * constructor that has no arguments.</p>
@@ -38,7 +38,7 @@ import org.microbean.environment.api.Path;
  *
  * @see AbstractProvider
  *
- * @see org.microbean.environment.Environment
+ * @see org.microbean.environment.DefaultLoader
  */
 @FunctionalInterface
 public interface Provider {

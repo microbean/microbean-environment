@@ -21,9 +21,9 @@ role, even at a time.
  * _Advertises_ <<configuration,configuration>> information that her
    <<component,components>> will consult.
 
-Roles that are interested in the <<component,components>> she produces
-include the <<application_assembler>> and the
-<<configuration_author>>.
+Roles that are interested in the <<component,components>> the
+<<component_developer>> produces include the <<application_assembler>>
+and the <<configuration_author>>.
 
 [#application_assembler]
 ==== Application Assembler
@@ -46,8 +46,8 @@ include the <<application_assembler>> and the
    or tailor it to its <<environment,environment>>.
 
 Roles that are interested in the <<assemble,assembled>>
-<<application,application>> she produces include the
-<<application_deployer>> and the <<configuration_author>>.
+<<application,application>> the <<application_assembler>> produces
+include the <<application_deployer>> and the <<configuration_author>>.
 
 [#configuration_author]
 ==== Configuration Author
@@ -65,8 +65,8 @@ Roles that are interested in the <<assemble,assembled>>
    in order to understand what <<configuration,configuration>> values
    need to be present.
 
- * Understands her configuration management system and its authoring
-   tools.
+ * Understands her <<configuration_system,configuration system>> and
+   its authoring tools.
 
  * Uses, directly or indirectly, knowingly
    or unknowingly, the work of an <<infrastructure_developer>> in
@@ -75,11 +75,12 @@ Roles that are interested in the <<assemble,assembled>>
    implementation of this specification.
 
  * Wants to avoid duplicating
-   <<configuration,configuration>> values as much as possible to
+   <<configuration,configurations>> as much as possible to
    minimize errors.
 
-Roles that are interested in the <<configuration,configuration>>
-values she authors include the <<application_assembler>>.
+Roles that are interested in the <<configuration,configurations>> the
+<<configuration_author>> produces include the
+<<application_assembler>>.
 
 [#application_deployer]
 ==== Application Deployer
@@ -105,7 +106,7 @@ provider interfaces_ defined by this specification, and may be among
 those that the <<application_assembler>> uses when
 <<assemble,assembling>> an <<application,application>>.
 
-Roles that are interested in the choices and components she makes and
-develops include the <<configuration_author>> and the
-<<application_assembler>>.
+Roles that are interested in the choices and components the
+<<infrastructure_developer>> makes and produces include the
+<<configuration_author>> and the <<application_assembler>>.
 

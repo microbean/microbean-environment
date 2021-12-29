@@ -20,5 +20,8 @@
  *
  * @author <a href="https://about.me/lairdnelson"
  * target="_parent">Laird Nelson</a>
+ *
+ * @see <a href="{@docRoot}/doc-files/spec/spec.html">microBean™ Environment
+ * Specification</a>
  */
 package org.microbean.environment.api;

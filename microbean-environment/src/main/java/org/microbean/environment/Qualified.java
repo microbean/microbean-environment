@@ -14,7 +14,9 @@
  * implied.  See the License for the specific language governing
  * permissions and limitations under the License.
  */
-package org.microbean.environment.api;
+package org.microbean.environment;
+
+import org.microbean.environment.api.Qualifiers;
 
 /**
  * A pairing of a {@link Qualifiers} and an object qualified by them.
