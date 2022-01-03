@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.microbean</groupId>
+  <artifactId>microbean-environment-parent</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>org.microbean</groupId>
+    <artifactId>microbean-pluginmanagement-pom</artifactId>
+    <version>18</version>
+    <relativePath />
+  </parent>
+
+  <name>microBean™ Environment: Parent</name>
+  <description>Environmental objects for Java.</description>
+  <inceptionYear>2019</inceptionYear>
+  <url>https://microbean.github.io/microbean-environment</url>
+
+  <scm>
+    <connection>scm:git:git@github.com:microbean/microbean-environment.git</connection>
+    <developerConnection>scm:git:git@github.com:microbean/microbean-environment.git</developerConnection>
+    <url>https://github.com/microbean/microbean-environment/</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>microbean-environment</id>
+      <name>microBean™ Environment</name>
+      <url>https://microbean.github.io/microbean-environment</url>
+    </site>
+  </distributionManagement>
+
+  <modules>
+    <module>microbean-environment-api</module>
+    <module>microbean-environment-jackson</module>
+    <module>microbean-environment-jackson-toml</module>
+    <module>microbean-environment</module>
+  </modules>
+  
+  <dependencyManagement>
+    <dependencies>
+
+
+      <!-- Imported dependencies. -->
+
+
+      <dependency>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>2.13.0</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      
+      <!-- Normal dependencies. -->
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-development-annotations</artifactId>
+        <version>0.2.11</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>org.microbean</groupId>
+        <artifactId>microbean-type</artifactId>
+        <version>0.0.14</version>
+        <type>jar</type>
+      </dependency>
+
+      <!-- Maven modules. -->
+      
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-environment-api</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-environment</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-environment-jackson</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+
+      <dependency>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>microbean-environment-jackson-toml</artifactId>
+        <version>${project.version}</version>
+        <type>jar</type>
+      </dependency>
+      
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <compilerArgs>
+              <arg>--enable-preview</arg>
+              <arg>-Xlint:all</arg>
+              <arg>-Xlint:-preview</arg>
+              <arg>-Xpkginfo:always</arg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <configuration>
+            <argLine>--enable-preview</argLine>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <additionalOptions>
+              <additionalOption>--enable-preview</additionalOption>
+            </additionalOptions>
+            <docfilessubdirs>true</docfilessubdirs>
+            <javadocDirectory>${project.build.directory}/javadoc</javadocDirectory>
+            <taglet>guru.nidi.graphviz.GraphvizTaglet</taglet>
+            <tagletArtifact>
+              <groupId>guru.nidi</groupId>
+              <artifactId>graphviz-taglet9</artifactId>
+              <version>0.18.0</version>
+            </tagletArtifact>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-scm-publish-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-site-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>Stage site</id>
+              <goals>
+                <goal>stage</goal>
+              </goals>
+              <phase>post-site</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <configuration>
+            <argLine>--enable-preview</argLine>
+            <systemPropertyVariables>
+              <project.build.directory>${project.build.directory}</project.build.directory>
+              <project.build.outputDirectory>${project.build.outputDirectory}</project.build.outputDirectory>
+              <project.build.testDirectory>${project.build.testDirectory}</project.build.testDirectory>
+              <project.build.testOutputDirectory>${project.build.testOutputDirectory}</project.build.testOutputDirectory>
+            </systemPropertyVariables>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>com.github.github</groupId>
+          <artifactId>site-maven-plugin</artifactId>
+          <inherited>false</inherited>
+        </plugin>
+        <plugin>
+          <groupId>org.jboss.jandex</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <configuration>
+            <indexName>${jandex.indexName}</indexName>
+            <processDefaultFileSet>false</processDefaultFileSet>
+            <verbose>${jandex.verbose}</verbose>
+          </configuration>
+          <executions>
+            <execution>
+              <id>Create Jandex index</id>
+              <phase>process-classes</phase>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.outputDirectory}</directory>
+                  </fileSet>
+                </fileSets>
+              </configuration>
+            </execution>
+            <execution>
+              <id>Create Jandex index for test classes</id>
+              <phase>process-test-classes</phase>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.testOutputDirectory}</directory>
+                  </fileSet>
+                </fileSets>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>org.asciidoctor</groupId>
+          <artifactId>asciidoctor-maven-plugin</artifactId>
+          <version>2.2.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.jboss.jandex</groupId>
+        <artifactId>jandex-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>Create Jandex index</id>
+            <goals>
+              <goal>jandex</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>Create Jandex index for test classes</id>
+            <goals>
+              <goal>jandex</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <properties>
+
+    <!-- site-maven-plugin properties; see https://github.com/github/maven-plugins/tree/master/github-site-plugin -->
+    <github.site.dryRun>true</github.site.dryRun>
+    <github.site.skip>true</github.site.skip>
+    <siteOutputDirectory>${project.build.directory}/staging</siteOutputDirectory>
+    <topSiteUrl>https://microbean.github.io/microbean-environment/</topSiteUrl>
+
+    <!-- maven-release-plugin properties; see http://maven.apache.org/maven-release/maven-release-plugin/ -->
+    <goals>deploy,post-site</goals>
+
+    <!-- NetBeans-related properties -->
+    <netbeans.hint.jdkPlatform>JDK_17</netbeans.hint.jdkPlatform>
+    
+    <jandex.indexName>jandex.idx</jandex.indexName>
+    <jandex.verbose>true</jandex.verbose>
+
+    <jdkToolchainVendor>openjdk</jdkToolchainVendor>
+
+    <!-- maven-javadoc-plugin properties -->
+    <links>https://microbean.github.io/microbean-development-annotations/apidocs,https://microbean.github.io/microbean-type/apidocs,https://fasterxml.github.io/jackson-core/javadoc/2.13/</links>
+
+  </properties>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <reportSets>
+          <reportSet>
+            <id>aggregate</id>
+            <inherited>false</inherited>
+            <reports>
+              <report>aggregate</report>
+            </reports>
+          </reportSet>
+          <reportSet>
+            <id>default</id>
+            <inherited>true</inherited>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+    </plugins>
+  </reporting>
+
+</project>

@@ -1,0 +1,13 @@
+[#introduction]
+== Introduction
+
+include::_purpose.adoc[]
+
+include::_goals.adoc[]
+
+include::_non_goals.adoc[]
+
+include::_roles.adoc[]
+
+include::_terminology.adoc[]
+

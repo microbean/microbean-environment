@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>microbean-environment-api</artifactId>
+
+  <parent>
+    <groupId>org.microbean</groupId>
+    <artifactId>microbean-environment-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <name>microBean™ Environment: API</name>
+  <description>${project.name}</description>
+
+  <dependencies>
+
+    <!-- Test-scoped dependencies. -->
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Compile-scoped dependencies. -->
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-development-annotations</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.microbean</groupId>
+      <artifactId>microbean-type</artifactId>
+      <type>jar</type>
+      <scope>compile</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.asciidoctor</groupId>
+        <artifactId>asciidoctor-maven-plugin</artifactId>
+        <configuration>
+          <attributes>
+            <docinfo>shared</docinfo>
+            <doctitle/>
+            <imagesdir>images</imagesdir>
+          </attributes>
+          <backend>html5</backend>
+          <doctype>book</doctype>
+          <enableVerbose>true</enableVerbose>
+          <logHandler>
+            <failIf>
+              <severity>ERROR</severity>
+            </failIf>
+          </logHandler>
+          <outputDirectory>${project.build.directory}/javadoc/doc-files/spec</outputDirectory>
+          <sourceDirectory>src/main/asciidoc</sourceDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>Generate HTML from AsciiDoc (generate-resources)</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>process-asciidoc</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <properties>
+    <github.site.skip>true</github.site.skip>
+  </properties>
+
+</project>
