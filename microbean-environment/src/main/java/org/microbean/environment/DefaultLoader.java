@@ -300,11 +300,38 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return this.parent;
   }
 
+  /**
+   * Returns the {@linkplain Path#isAbsolute() absolute} {@link Path}
+   * with which this {@link DefaultLoader} is associated.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * @return the non-{@code null} {@linkplain Path#isAbsolute()
+   * absolute} {@link Path} with which this {@link DefaultLoader} is
+   * associated
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   */
   @Override // Loader<T>
   public final Path<T> absolutePath() {
     return this.absolutePath;
   }
 
+  /**
+   * Returns {@code true} if this {@link DefaultLoader}'s {@link
+   * #get()} method is deterministic.
+   *
+   * <p>A method is deterministic if it returns the same object
+   * reference for every invocation.</p>
+   *
+   * @return {@code true} if this {@link DefaultLoader}'s {@link
+   * #get()} method is deterministic; {@code false} otherwise
+   */
   public final boolean deterministic() {
     return this.deterministic;
   }
@@ -319,6 +346,43 @@ public class DefaultLoader<T> implements AutoCloseable, Loader<T> {
     return (DefaultLoader<?>)Loader.super.loaderFor(path);
   }
 
+  /**
+   * Returns a {@link DefaultLoader} that can {@linkplain #get()
+   * supply} environmental objects that are suitable for the supplied
+   * {@code path}.
+   *
+   * <p>This method never returns {@code null}.</p>
+   *
+   * <p>The {@link DefaultLoader} that is returned may return {@code
+   * null} from its {@link Loader#get() get()} method.  Additionally,
+   * the {@link DefaultLoader} that is returned may throw {@link
+   * java.util.NoSuchElementException} or {@link
+   * UnsupportedOperationException} from its {@link #get() get()}
+   * method.</p>
+   *
+   * @param <U> the type of the supplied {@link Path} and the type of
+   * the returned {@link DefaultLoader}
+   *
+   * @param path the {@link Path} for which a {@link DefaultLoader}
+   * should be returned; must not be {@code null}
+   *
+   * @return a {@link DefaultLoader} capable of {@linkplain #get()
+   * supplying} environmental objects suitable for the supplied {@code
+   * path}; never {@code null}
+   *
+   * @exception NullPointerException if {@code path} is {@code null}
+   *
+   * @exception IllegalArgumentException if the {@code path}, after
+   * {@linkplain #normalize(Path) normalization}, {@linkplain
+   * Path#isRoot() is the root <code>Path</code>}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @threadsafety This method is idempotent and deterministic.
+   */
   @Override // Loader<T>
   public final <U> DefaultLoader<U> load(final Path<U> path) {
     final Path<U> absolutePath = this.normalize(path);

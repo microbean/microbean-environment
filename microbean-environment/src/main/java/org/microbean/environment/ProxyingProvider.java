@@ -219,8 +219,36 @@ public class ProxyingProvider extends AbstractProvider<Object> {
     return false;
   }
 
+  /**
+   * Returns a {@link Path} suitable for the combination of the
+   * supplied {@link Loader} and requested {@link Path}.
+   *
+   * @param <T> the type of the requested and returned {@link Path}s
+   *
+   * @param requestor the {@link Loader} issuing the current request;
+   * must not be {@code null}; ignored by this implementation
+   *
+   * @param absolutePath the {@linkplain Path#isAbsolute() absolute}
+   * {@link Path} representing the current request; must not be {@code
+   * null}
+   *
+   * @return a non-{@code null} {@link Path} with which any {@link
+   * Value} provided by this {@link ProxyingProvider} will be
+   * associated
+   *
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent but not necessarily deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   */
+  @SuppressWarnings("unchecked")
   protected <T> Path<T> path(final Loader<?> requestor, final Path<T> absolutePath) {
-    return Path.of(absolutePath.typeErasure());
+    // return Path.of(absolutePath.typeErasure());
+    return (Path<T>)Path.of(absolutePath.type());
   }
   
   /**
@@ -255,6 +283,56 @@ public class ProxyingProvider extends AbstractProvider<Object> {
       CharSequence.class.isAssignableFrom(parameterType);
   }
 
+  /**
+   * Invokes the {@link Proxy#newProxyInstance(ClassLoader, Class[],
+   * InvocationHandler)} method with appropriate arguments and returns
+   * the result.
+   *
+   * <p>The {@link Proxy#newProxyInstance(ClassLoader, Class[],
+   * InvocationHandler)} method is invoked with the following
+   * arguments:</p>
+   *
+   * <ol>
+   *
+   * <li>{@code interfaceToProxy.getClassLoader()}</li>
+   *
+   * <li>{@code new Class<?>[] { interfaceToProxy }}</li>
+   *
+   * <li>a special {@link InvocationHandler} backed by the supplied
+   * {@link Loader} and {@link Path}</li>
+   *
+   * </ol>
+   *
+   * @param requestor the {@link Loader} performing the current
+   * request; must not be {@code null}
+   *
+   * @param absolutePath an {@linkplain Path#isAbsolute() absolute}
+   * {@link Path} representing the current request; must not be {@code
+   * null}
+   *
+   * @param interfaceToProxy the single interface the new proxy
+   * instance will implement; must not be {@code null}; must be an
+   * interface
+   *
+   * @return a new proxy instance as produced by the {@link
+   * Proxy#newProxyInstance(ClassLoader, Class[], InvocationHandler)}
+   * method; never {@code null}
+   *
+   * @exception NullPointerException if any argument is {@code null}
+   *
+   * @exception IllegalArgumentException if any argument is unsuitable
+   *
+   * @nullability This method does not, and its overrides must not,
+   * return {@code null}.
+   *
+   * @idempotency This method is, and its overrides must be,
+   * idempotent and deterministic.
+   *
+   * @threadsafety This method is, and its overrides must be, safe for
+   * concurrent use by multiple threads.
+   *
+   * @see Proxy#newProxyInstance(ClassLoader, Class[], InvocationHandler)
+   */
   protected Object newProxyInstance(final Loader<?> requestor, final Path<?> absolutePath, final Class<?> interfaceToProxy) {
     return
       Proxy.newProxyInstance(interfaceToProxy.getClassLoader(),

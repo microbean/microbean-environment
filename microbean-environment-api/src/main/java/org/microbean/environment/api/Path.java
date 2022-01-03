@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2021 microBean™.
+ * Copyright © 2021–2022 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,10 +132,64 @@ public final class Path<T> implements Iterable<Element<?>> {
     return this.elements.iterator();
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} is the result of
+   * {@linkplain #transliterate(BiFunction) transliteration}.
+   *
+   * @return {@code true} if this {@link Path} is the result of
+   * {@linkplain #transliterate(BiFunction) transliteration}; {@code
+   * false} otherwise
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #transliterate(BiFunction)
+   */
   public final boolean isTransliterated() {
     return this.transliterated;
   }
 
+  /**
+   * <em>Transliterates</em> this {@link Path} into another,
+   * semantically equivalent {@link Path} by applying the supplied
+   * {@link BiFunction}, and returns the transliterated {@link Path}.
+   *
+   * <p>The supplied {@link BiFunction} accepts a Java package name as
+   * its first argument, which will be the first package name
+   * {@linkplain StackWalker encountered in the current thread's
+   * stack} that identifies a caller whose package name is not equal
+   * to {@link Class#getPackageName() Path.class.getPackageName()}.
+   * Its second argument is an {@link Element Element} from this
+   * {@link Path}.  It must return an {@link Element} representing the
+   * transliteration of its second argument (which may be the second
+   * argument itself).</p>
+   *
+   * <p>Transliteration can be needed when a {@link Path} is defined
+   * by a Java class and used by an application containing that Java
+   * class&mdash;because another Java class may have used the same
+   * element names to refer to different things.</p>
+   *
+   * <p>If this {@link Path} {@linkplain #isTransliterated() is
+   * already transliterated} then it is returned.</p>
+   *
+   * @param f a {@link BiFunction} responsible for the
+   * transliteration, element by element; may be {@code null}
+   *
+   * @return the transliterated {@link Path}, which may be this {@link
+   * Path}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic, but the
+   * supplied {@link BiFunction} may not be.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads, but the supplied {@link BiFunction} may not be.
+   *
+   * @see #isTransliterated()
+   */
   @Experimental
   public final Path<T> transliterate(final BiFunction<? super String, ? super Element<?>, ? extends Element<?>> f) {
     if (f == null) {
@@ -621,19 +675,109 @@ public final class Path<T> implements Iterable<Element<?>> {
     return this.last().type().orElseThrow(AssertionError::new);
   }
 
+  /**
+   * Returns the type erasure of this {@link Path}.
+   *
+   * @return the type erasure of this {@link Path}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #type()
+   */
   @SuppressWarnings("unchecked")
-  public final Class<T> typeErasure() {
+  public final Class<T> typeErasure() {    
     return (Class<T>)Types.erase(this.type());
   }
 
+  /**
+   * Returns the {@link ClassLoader} {@linkplain
+   * Class#getClassLoader() associated with} this {@link Path}'s
+   * {@linkplain #typeErasure() type erasure}.
+   *
+   * @return the {@link ClassLoader} {@linkplain
+   * Class#getClassLoader() associated with} this {@link Path}'s
+   * {@linkplain #typeErasure() type erasure}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
+  @Convenience
   public final ClassLoader classLoader() {
     return this.typeErasure().getClassLoader();
   }
 
+  /**
+   * Returns the zero-based index identifying the position of the
+   * first occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} the supplied {@link Path} within this {@link Path}, or
+   * a negative value if the supplied {@link Path} does not occur
+   * within this {@link Path}.
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @return the zero-based index identifying the position of the
+   * first occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public final int indexOf(final Path<?> other) {
     return other == this ? 0 : Collections.indexOfSubList(this.elements, other.elements);
   }
 
+  /**
+   * Returns the zero-based index identifying the position of the
+   * first occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}.
+   *
+   * <p>The supplied {@link BiPredicate} is used to test each {@link
+   * Element} of the supplied {@link Path} against {@link Element}s
+   * from this {@link Path}.  The first argument is an {@link Element}
+   * drawn from this {@link Path}.  The second argument is an {@link
+   * Element} drawn from the supplied {@link Path}.  The {@link
+   * BiPredicate} returns {@code true} if its arguments are deemed to
+   * match.  The supplied {@link BiPredicate}'s {@link
+   * BiPredicate#test(Object, Object)} method must be idempotent and
+   * deterministic.</p>
+   *
+   * @param path the other {@link Path}; must not be {@code null}
+   *
+   * @param p the {@link BiPredicate} used to {@linkplain
+   * BiPredicate#test(Object, Object) test} {@link Element}s; must not
+   * be {@code null}
+   *
+   * @return the zero-based index identifying the position of the
+   * first occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}
+   *
+   * @exception NullPointerException if either {@code path} or {@code
+   * p} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public final int indexOf(final Path<?> path, final BiPredicate<? super Element<?>, ? super Element<?>> p) {
     final int pathSize = path.size();
     final int sizeDiff = this.size() - pathSize;
@@ -649,10 +793,69 @@ public final class Path<T> implements Iterable<Element<?>> {
     return -1;
   }
 
+  /**
+   * Returns the zero-based index identifying the position of the
+   * last occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} the supplied {@link Path} within this {@link Path}, or
+   * a negative value if the supplied {@link Path} does not occur
+   * within this {@link Path}.
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @return the zero-based index identifying the position of the
+   * last occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public final int lastIndexOf(final Path<?> other) {
     return other == this ? 0 : Collections.lastIndexOfSubList(this.elements, other.elements);
   }
 
+  /**
+   * Returns the zero-based index identifying the position of the
+   * last occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}.
+   *
+   * <p>The supplied {@link BiPredicate} is used to test each {@link
+   * Element} of the supplied {@link Path} against {@link Element}s
+   * from this {@link Path}.  The first argument is an {@link Element}
+   * drawn from this {@link Path}.  The second argument is an {@link
+   * Element} drawn from the supplied {@link Path}.  The {@link
+   * BiPredicate} returns {@code true} if its arguments are deemed to
+   * match.  The supplied {@link BiPredicate}'s {@link
+   * BiPredicate#test(Object, Object)} method must be idempotent and
+   * deterministic.</p>
+   *
+   * @param path the other {@link Path}; must not be {@code null}
+   *
+   * @param p the {@link BiPredicate} used to {@linkplain
+   * BiPredicate#test(Object, Object) test} {@link Element}s; must not
+   * be {@code null}
+   *
+   * @return the zero-based index identifying the position of the
+   * last occurrence of a {@link Path} {@linkplain #equals(Object)
+   * equal to} supplied {@link Path} within this {@link Path}, or a
+   * negative value if the supplied {@link Path} does not occur within
+   * this {@link Path}
+   *
+   * @exception NullPointerException if either {@code path} or {@code
+   * p} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public final int lastIndexOf(final Path<?> path, final BiPredicate<? super Element<?>, ? super Element<?>> p) {
     final int pathSize = path.size();
     final int sizeDiff = this.size() - pathSize;
@@ -668,41 +871,222 @@ public final class Path<T> implements Iterable<Element<?>> {
     return -1;
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} starts with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}.
+   *
+   * <p>This method returns {@code true} if and only if:</p>
+   *
+   * <ul>
+   *
+   * <li>{@code other} is identical to this {@link Path}, or</li>
+   *
+   * <li>An invocation of the {@link #indexOf(Path)} method with
+   * {@code other} as its sole argument returns {@code 0}</li>
+   *
+   * </ul>
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @return {@code true} if this {@link Path} starts with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}; {@code false} otherwise
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #indexOf(Path)
+   */
   public final boolean startsWith(final Path<?> other) {
-    if (other == this) {
-      return true;
-    } else if (other == null) {
-      return false;
-    } else {
-      return this.indexOf(other) == 0;
-    }
+    return other == this || this.indexOf(other) == 0;
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} starts with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}.
+   *
+   * <p>The supplied {@link BiPredicate} is used to test each {@link
+   * Element} of the supplied {@link Path} against {@link Element}s
+   * from this {@link Path}.  The first argument is an {@link Element}
+   * drawn from this {@link Path}.  The second argument is an {@link
+   * Element} drawn from the supplied {@link Path}.  The {@link
+   * BiPredicate} returns {@code true} if its arguments are deemed to
+   * match.  The supplied {@link BiPredicate}'s {@link
+   * BiPredicate#test(Object, Object)} method must be idempotent and
+   * deterministic.</p>
+   *
+   * <p>This method returns {@code true} if and only if:</p>
+   *
+   * <ul>
+   *
+   * <li>{@code other} is identical to this {@link Path}, or</li>
+   *
+   * <li>An invocation of the {@link #indexOf(Path, BiPredicate)}
+   * method with {@code other} and {@code p} as its arguments returns
+   * {@code 0}</li>
+   *
+   * </ul>
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @param p the {@link BiPredicate} used to {@linkplain
+   * BiPredicate#test(Object, Object) test} {@link Element}s; must not
+   * be {@code null}
+   *
+   * @return {@code true} if this {@link Path} starts with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}; {@code false} otherwise
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #indexOf(Path, BiPredicate)
+   */
   public final boolean startsWith(final Path<?> other, final BiPredicate<? super Element<?>, ? super Element<?>> p) {
-    return this.indexOf(other, p) == 0;
+    return other == this || this.indexOf(other, p) == 0;
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} ends with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}.
+   *
+   * <p>This method returns {@code true} if and only if:</p>
+   *
+   * <ul>
+   *
+   * <li>{@code other} is identical to this {@link Path}, or</li>
+   *
+   * <li>An invocation of the {@link #lastIndexOf(Path)} method with
+   * {@code other} as its sole argument returns {@code 0} or a
+   * positive {@code int}, and that number plus the supplied {@link
+   * Path}'s {@linkplain #size() size} is equal to this {@link Path}'s
+   * {@linkplain #size() size}</li>
+   *
+   * </ul>
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @return {@code true} if this {@link Path} ends with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}; {@code false} otherwise
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #lastIndexOf(Path)
+   */
   public final boolean endsWith(final Path<?> other) {
     if (other == this) {
       return true;
-    } else if (other == null) {
-      return false;
     } else {
       final int lastIndex = this.lastIndexOf(other);
       return lastIndex >= 0 && lastIndex + other.size() == this.size();
     }
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} ends with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}.
+   *
+   * <p>The supplied {@link BiPredicate} is used to test each {@link
+   * Element} of the supplied {@link Path} against {@link Element}s
+   * from this {@link Path}.  The first argument is an {@link Element}
+   * drawn from this {@link Path}.  The second argument is an {@link
+   * Element} drawn from the supplied {@link Path}.  The {@link
+   * BiPredicate} returns {@code true} if its arguments are deemed to
+   * match.  The supplied {@link BiPredicate}'s {@link
+   * BiPredicate#test(Object, Object)} method must be idempotent and
+   * deterministic.</p>
+   *
+   * <p>This method returns {@code true} if and only if:</p>
+   *
+   * <ul>
+   *
+   * <li>{@code other} is identical to this {@link Path}, or</li>
+   *
+   * <li>An invocation of the {@link #indexOf(Path, BiPredicate)}
+   * method with {@code other} and {@code p} as its arguments returns
+   * {@code 0} or a positive {@code int}, and if that number plus the
+   * supplied {@link Path}'s {@linkplain #size() size} is equal to
+   * this {@link Path}'s {@linkplain #size() size}</li>
+   *
+   * </ul>
+   *
+   * @param other the other {@link Path}; must not be {@code null}
+   *
+   * @param p the {@link BiPredicate} used to {@linkplain
+   * BiPredicate#test(Object, Object) test} {@link Element}s; must not
+   * be {@code null}
+   *
+   * @return {@code true} if this {@link Path} ends with a {@link
+   * Path} that is {@linkplain #equals(Object) equal to} the supplied
+   * {@link Path}; {@code false} otherwise
+   *
+   * @exception NullPointerException if {@code other} is {@code null}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #lastIndexOf(Path, BiPredicate)
+   */
   public final boolean endsWith(final Path<?> other, final BiPredicate<? super Element<?>, ? super Element<?>> p) {
-    final int lastIndex = this.lastIndexOf(other, p);
-    return lastIndex >= 0 && lastIndex + other.size() == this.size();
+    if (other == this) {
+      return true;
+    } else {
+      final int lastIndex = this.lastIndexOf(other, p);
+      return lastIndex >= 0 && lastIndex + other.size() == this.size();
+    }
   }
 
+  /**
+   * Returns a hashcode for this {@link Path} based solely off of its
+   * {@link Element}s.
+   *
+   * @return a hashcode for this {@link Path}
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   @Override // Object
   public final int hashCode() {
     return this.elements.hashCode();
   }
 
+  /**
+   * Returns {@code true} if this {@link Path} is equal to the
+   * supplied {@link Object}.
+   *
+   * @param other the {@link Object} to test; may be {@code null} in
+   * which case {@code false} will be returned
+   *
+   * @return {@code true} if this {@link Path} is equal to the
+   * supplied {@link Object}; {@code false} otherwise
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   @Override // Object
   public final boolean equals(final Object other) {
     if (other == this) {
@@ -714,6 +1098,20 @@ public final class Path<T> implements Iterable<Element<?>> {
     }
   }
 
+  /**
+   * Returns a non-{@code null} {@link String} representation of this
+   * {@link Path}.
+   *
+   * @return a non-{@code null} {@link String} representation of this
+   * {@link Path}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   @Override // Object
   public final String toString() {
     final StringJoiner sj = new StringJoiner("/");
@@ -729,29 +1127,190 @@ public final class Path<T> implements Iterable<Element<?>> {
    */
 
 
+  /**
+   * Returns the root {@link Path} (the {@link Path} that {@linkplain
+   * #isRelative() is relative to} no other {@link Path}).
+   *
+   * @return the root {@link Path} (the {@link Path} that {@linkplain
+   * #isRelative() is relative to} no other {@link Path}); never
+   * {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public static final Path<?> root() {
     return ROOT;
   }
 
+  /**
+   * Invokes the {@link Element#of(String, Class, List, List)} method
+   * with the supplied {@code type}, passes the result to the {@link
+   * #of(Element)} method, and returns the result.
+   *
+   * @param <U> the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @param type the {@linkplain Element#type() type} of the sole
+   * {@link Element}; must not be {@code null}
+   *
+   * @return a {@link Path} with a single {@link Element} {@linkplain
+   * Element#type() bearing} the supplied {@code type}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(Element)
+   *
+   * @see Element#of(String, Class, List, List)
+   */
   public static final <U> Path<U> of(final Class<U> type) {
-
     return of(Element.of("", type, (List<? extends Class<?>>)null, (List<? extends String>)null));
   }
 
+  /**
+   * Invokes the {@link Element#of(String, TypeToken, List, List)}
+   * method with the supplied {@code type}, passes the result to the
+   * {@link #of(Element)} method, and returns the result.
+   *
+   * @param <U> the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @param type the {@linkplain Element#type() type} of the sole
+   * {@link Element}; must not be {@code null}
+   *
+   * @return a {@link Path} with a single {@link Element} {@linkplain
+   * Element#type() bearing} the supplied {@code type}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(Element)
+   *
+   * @see Element#of(String, TypeToken, List, List)
+   */
   public static final <U> Path<U> of(final TypeToken<U> type) {
     return of(Element.of("", type, (List<? extends Class<?>>)null, (List<? extends String>)null));
   }
 
+  /**
+   * Invokes the {@link Element#of(String, Type, List, List)} method
+   * with the supplied {@code type}, passes the result to the {@link
+   * #of(Element)} method, and returns the result.
+   *
+   * @param type the {@linkplain Element#type() type} of the sole
+   * {@link Element}; must not be {@code null}
+   *
+   * @return a {@link Path} with a single {@link Element} {@linkplain
+   * Element#type() bearing} the supplied {@code type}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(Element)
+   *
+   * @see Element#of(String, Type, List, List)
+   */
   public static final Path<?> of(final Type type) {
     return of(Element.of("", type, (List<? extends Class<?>>)null, (List<? extends String>)null));
   }
 
+  /**
+   * Supplies a {@link Path} equal to a {@link Path} consisting of a
+   * single element that is equal to the supplied {@link Element}.
+   *
+   * <p>In most cases, this method creates a new {@link Path} with the
+   * supplied {@link Element} as its only {@link Element}.</p>
+   *
+   * <p>If the supplied {@link Element} {@linkplain Element#isRoot()
+   * is the root <code>Element</code>}, then the return value of the
+   * {@link #root()} method is returned instead.</p>
+   *
+   * @param <U> the {@linkplain Element#type() type} of the supplied
+   * {@link Element}, and hence the {@linkplain #type() type} of the
+   * {@link Path} itself
+   *
+   * @param element the sole {@link Element} of the returned {@link
+   * Path}; must not be {@code null}
+   *
+   * @return a {@link Path} equal to a {@link Path} consisting of a
+   * single element that is equal to the supplied {@link Element};
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code element} is {@code null}
+   *
+   * @exception IllegalArgumentException if the supplied {@link
+   * Element} returns an {@linkplain Optional#isEmpty() empty} {@link
+   * Optional} from an invocation of its {@link Element#type()} method
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   @EntryPoint
   @SuppressWarnings("unchecked")
   public static final <U> Path<U> of(final Element<U> element) {
     return element.isRoot() ? (Path<U>)root() : new Path<>(element);
   }
 
+  /**
+   * Supplies a {@link Path} {@linkplain #equals(Object) equal to} a
+   * {@link Path} comprising the supplied {@link List} of {@link
+   * Element}s.
+   *
+   * <p>In most cases, this method creates a new {@link Path} with the
+   * supplied {@link List} of {@link Element}s as its {@link
+   * Element}s.</p>
+   *
+   * <p>If {@code elements} contains only one {@link Element} and that
+   * {@link Element} {@linkplain Element#isRoot() is the root
+   * <code>Element</code>}, then the return value of the {@link
+   * #root()} method is returned instead.</p>
+   *
+   * @param elements a {@link List} of {@link Element}s that will be
+   * equal to the returned {@link Path}'s {@linkplain #iterator()
+   * elements}; must not be {@code null}; must not be {@linkplain
+   * List#isEmpty() empty}
+   *
+   * @return a {@link Path} equal to a {@link Path} comprising {@link
+   * #iterator() Element}s equal to the supplied {@code elements};
+   * never {@code null}
+   *
+   * @exception NullPointerException if {@code elements} is {@code null}
+   *
+   * @exception IllegalArgumentException if {@code elements} is
+   * {@linkplain List#isEmpty() empty} or if the last {@link Element}
+   * in the list returns an {@linkplain Optional#isEmpty() empty}
+   * {@link Optional} from an invocation of its {@link Element#type()}
+   * method
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   */
   public static final Path<?> of(final List<? extends Element<?>> elements) {
     if (elements.isEmpty()) {
       throw new IllegalArgumentException("elements.isEmpty()");
@@ -762,6 +1321,39 @@ public final class Path<T> implements Iterable<Element<?>> {
     }
   }
 
+  /**
+   * Creates a {@link List} of {@link Element}s by invoking the {@link
+   * Element#of(String)} and {@link Element#of(TypeToken)} methods,
+   * supplies that {@link List} to the {@link #of(List)} method, and
+   * returns the resulting {@link Path}.
+   *
+   * @param <U> the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @param names a list of {@link String}s that will become
+   * {@linkplain Element#name() element names}; must not be {@code
+   * null}
+   *
+   * @param type the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @return a suitable {@link Path}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(List)
+   *
+   * @see Element#of(String)
+   *
+   * @see Element#of(TypeToken)
+   */
   @SuppressWarnings("unchecked")
   public static final <U> Path<U> of(final List<? extends String> names, final TypeToken<U> type) {
     final List<Element<?>> elements = new ArrayList<>(names.size() + 1);
@@ -772,6 +1364,39 @@ public final class Path<T> implements Iterable<Element<?>> {
     return (Path<U>)Path.of(elements);
   }
 
+  /**
+   * Creates a {@link List} of {@link Element}s by invoking the {@link
+   * Element#of(String)} and {@link Element#of(Class)} methods,
+   * supplies that {@link List} to the {@link #of(List)} method, and
+   * returns the resulting {@link Path}.
+   *
+   * @param <U> the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @param names a list of {@link String}s that will become
+   * {@linkplain Element#name() element names}; must not be {@code
+   * null}
+   *
+   * @param type the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @return a suitable {@link Path}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(List)
+   *
+   * @see Element#of(String)
+   *
+   * @see Element#of(Class)
+   */
   @SuppressWarnings("unchecked")
   public static final <U> Path<U> of(final List<? extends String> names, final Class<U> type) {
     final List<Element<?>> elements = new ArrayList<>(names.size() + 1);
@@ -782,6 +1407,35 @@ public final class Path<T> implements Iterable<Element<?>> {
     return (Path<U>)Path.of(elements);
   }
 
+  /**
+   * Creates a {@link List} of {@link Element}s by invoking the {@link
+   * Element#of(String)} and {@link Element#of(Type)} methods,
+   * supplies that {@link List} to the {@link #of(List)} method, and
+   * returns the resulting {@link Path}.
+   *
+   * @param names a list of {@link String}s that will become
+   * {@linkplain Element#name() element names}; must not be {@code
+   * null}
+   *
+   * @param type the {@linkplain Element#type() type} of the returned
+   * {@link Path}'s last {@link Element}, and hence the {@linkplain
+   * #type() type} of the {@link Path} itself
+   *
+   * @return a suitable {@link Path}; never {@code null}
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #of(List)
+   *
+   * @see Element#of(String)
+   *
+   * @see Element#of(Type)
+   */
   public static final Path<?> of(final List<? extends String> names, final Type type) {
     final List<Element<?>> elements = new ArrayList<>(names.size() + 1);
     for (final String name : names) {
@@ -925,15 +1579,77 @@ public final class Path<T> implements Iterable<Element<?>> {
       return this.name;
     }
 
+    /**
+     * Returns a non-{@code null} but possibly {@linkplain
+     * Optional#isEmpty() empty} {@link Optional} {@linkplain
+     * Optional#get() containing} the {@link Type} of this {@link
+     * Element}.
+     *
+     * @return a non-{@code null} but possibly {@linkplain
+     * Optional#isEmpty() empty} {@link Optional} {@linkplain
+     * Optional#get() containing} the {@link Type} of this {@link
+     * Element}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public final Optional<Type> type() {
       return this.type;
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Returns a non-{@code null} but but possibly {@linkplain
+     * Optional#isEmpty() empty} {@link Optional} {@linkplain
+     * Optional#get() containing} the type erasure of this {@link
+     * Element}'s {@linkplain #type() type}.
+     *
+     * @return a non-{@code null} but but possibly {@linkplain
+     * Optional#isEmpty() empty} {@link Optional} {@linkplain
+     * Optional#get() containing} the type erasure of this {@link
+     * Element}'s {@linkplain #type() type}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #type()
+     */
     public final Optional<Class<T>> typeErasure() {
-      return this.type.flatMap(t -> Optional.of((Class<T>)Types.erase(t)));
+      @SuppressWarnings("unchecked")
+      final Class<T> c = (Class<T>)Types.erase(this.type().orElse(null));
+      return Optional.ofNullable(c);
     }
 
+    /**
+     * Returns an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}.
+     *
+     * @param <U> the type of the returned {@link Element}
+     *
+     * @param type the type for the returned {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}; never {@code null}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #type()
+     */
     @SuppressWarnings("unchecked")
     public final <U> Element<U> with(final Class<U> type) {
       if (type == this.type().orElse(null)) {
@@ -947,6 +1663,29 @@ public final class Path<T> implements Iterable<Element<?>> {
       }
     }
 
+    /**
+     * Returns an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}.
+     *
+     * @param <U> the type of the returned {@link Element}
+     *
+     * @param type the type for the returned {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}; never {@code null}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #type()
+     */
     @SuppressWarnings("unchecked")
     public final <U> Element<U> with(final TypeToken<U> type) {
       final Type t = type.type();
@@ -961,6 +1700,27 @@ public final class Path<T> implements Iterable<Element<?>> {
       }
     }
 
+    /**
+     * Returns an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}.
+     *
+     * @param type the type for the returned {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} equal to this {@link Element} in all
+     * respects but with the supplied {@code type} as its {@linkplain
+     * #type() type}; never {@code null}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #type()
+     */
     public final Element<?> with(final Type type) {
       if (type == this.type().orElse(null)) {
         return this;
@@ -971,16 +1731,32 @@ public final class Path<T> implements Iterable<Element<?>> {
       }
     }
 
+    /**
+     * Returns an {@link Optional} {@linkplain Optional#get()
+     * yielding} an immutable {@link List} of the parameters
+     * associated with this {@link Element}.
+     *
+     * @return an {@link Optional} {@linkplain Optional#get()
+     * yielding} an immutable {@link List} of the parameters
+     * associated with this {@link Element}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public final Optional<List<Class<?>>> parameters() {
       return this.parameters;
     }
 
     /**
      * Returns a non-{@code null} but possibly {@linkplain
-     * Optional#isEmpty() empty} {@link Optional} containing a {@link
-     * List} of {@link String} representations of argument values
-     * supplied for their corresponding {@linkplain #parameters()
-     * parameters}.
+     * Optional#isEmpty() empty} {@link Optional} {@linkplain
+     * Optional#get() containing} a {@link List} of {@link String}
+     * representations of argument values supplied for their
+     * corresponding {@linkplain #parameters() parameters}.
      *
      * <p>The {@link List}, if any, contained by the returned {@link
      * Optional} is <a
@@ -1016,15 +1792,110 @@ public final class Path<T> implements Iterable<Element<?>> {
       return this.arguments;
     }
 
+    /**
+     * Returns {@code true} if and only if this {@link Element}'s
+     * {@linkplain type() type} is identical to {@code void.class} and
+     * this {@link Element}'s {@linkplain #name() name} {@linkplain
+     * String#isEmpty() is empty}.
+     *
+     * @return {@code true} if and only if this {@link Element}'s
+     * {@linkplain type() type} is identical to {@code void.class} and
+     * this {@link Element}'s {@linkplain #name() name} {@linkplain
+     * String#isEmpty() is empty}
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @see #type()
+     *
+     * @see #name()
+     */
     public final boolean isRoot() {
       return this.type().orElse(null) == void.class && this.name().isEmpty();
     }
 
+    /**
+     * Computes and returns a hashcode for this {@link Element} based
+     * on its {@linkplain #name() name}, {@linkplain #type() type},
+     * {@linkplain #parameters() parameters} and {@linkplain
+     * #arguments() arguments}.
+     *
+     * @return a hashcode for this {@link Element}
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @see #equals(Object)
+     */
     @Override // Object
     public final int hashCode() {
       return Objects.hash(this.name(), this.type(), this.parameters(), this.arguments());
     }
 
+    /**
+     * Returns {@code true} if this {@link Element} is equal to the
+     * supplied {@link Object}.
+     *
+     * <p>This {@link Element} is equal to the supplied {@link Object}
+     * if and only if all of the following conditions hold:</p>
+     *
+     * <ul>
+     *
+     * <li>The supplied {@link Object} is non-{@code null} and returns
+     * {@link Element Element.class} from its {@link
+     * Object#getClass()} method</li>
+     *
+     * <li>{@link Objects#equals(Object, Object)} returns {@code true}
+     * when supplied with this {@link Element}'s {@linkplain #name()
+     * name} and the other {@link Element}'s {@linkplain #name()
+     * name}</li>
+     *
+     * <li>{@link Objects#equals(Object, Object)} returns {@code true}
+     * when supplied with this {@link Element}'s {@linkplain #type()
+     * type} and the other {@link Element}'s {@linkplain #type()
+     * type}</li>
+     *
+     * <li>{@link Objects#equals(Object, Object)} returns {@code true}
+     * when supplied with this {@link Element}'s {@linkplain
+     * #parameters() parameters} and the other {@link Element}'s
+     * {@linkplain #parameters() parameters}</li>
+     *
+     * <li>{@link Objects#equals(Object, Object)} returns {@code true}
+     * when supplied with this {@link Element}'s {@linkplain
+     * #arguments() arguments} and the other {@link Element}'s
+     * {@linkplain #arguments() arguments}</li>
+     *
+     * </ul>
+     *
+     * @param other the {@link Object} to test; may be {@code null} in
+     * which case {@code false} will be returned
+     *
+     * @return {@code true} if this {@link Element} is equal to the
+     * supplied {@link Object}; {@code false} otherwise
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #hashCode()
+     *
+     * @see #name()
+     *
+     * @see #type()
+     *
+     * @see #parameters()
+     *
+     * @see #arguments()
+     *
+     * @see Objects#equals(Object, Object)
+     */
     @Override // Object
     public final boolean equals(final Object other) {
       if (other == this) {
@@ -1041,6 +1912,23 @@ public final class Path<T> implements Iterable<Element<?>> {
       }
     }
 
+    /**
+     * Returns a non-{@code null} {@link String} representation of
+     * this {@link Element}.
+     *
+     * <p>The format of the returned {@link String} is deliberately
+     * not specified.</p>
+     *
+     * return a non-{@code null} {@link String} representation of this
+     * {@link Element}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @Override // Object
     public final String toString() {
       final StringBuilder sb = new StringBuilder(this.name());
@@ -1070,80 +1958,372 @@ public final class Path<T> implements Iterable<Element<?>> {
      */
 
 
+    /**
+     * Returns an {@link Element} whose {@link #isRoot()} method is
+     * guaranteed to return {@code true}.
+     *
+     * @return an {@link Element} whose {@link #isRoot()} method is
+     * guaranteed to return {@code true}; never {@code null}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     *
+     * @see #isRoot()
+     */
     public static final Element<?> root() {
       return ROOT;
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}.
+     *
+     * @param <U> the type of the Element
+     *
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameters the parameters for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param arguments the arguments for the {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final String name,
                                           final Class<U> type,
                                           final List<? extends Class<?>> parameters,
                                           final List<? extends String> arguments) {
-      if (name.isEmpty() && type == void.class && parameters == null && arguments == null) {
+      if ((name == null || name.isEmpty()) && type == void.class && parameters == null && arguments == null) {
         return (Element<U>)root();
       }
       return new Element<>(name, type, parameters, arguments, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}.
+     *
+     * @param <U> the type of the Element
+     *
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameters the parameters for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param arguments the arguments for the {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final String name,
                                           final TypeToken<U> type,
                                           final List<? extends Class<?>> parameters,
                                           final List<? extends String> arguments) {
-      final Type t = type.type();
-      if (name.isEmpty() && t == void.class && parameters == null && arguments == null) {
+      final Type t = type == null ? null : type.type();
+      if ((name == null || name.isEmpty()) && t == void.class && parameters == null && arguments == null) {
         return (Element<U>)root();
       }
-      return new Element<>(name, type.type(), parameters, arguments, false);
+      return new Element<>(name, t, parameters, arguments, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}.
+     *
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameters the parameters for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param arguments the arguments for the {@link Element}; may be
+     * {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} a copy of the supplied {@code parameters}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} a copy of the supplied {@code arguments}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final Element<?> of(final String name,
                                       final Type type,
                                       final List<? extends Class<?>> parameters,
                                       final List<? extends String> arguments) {
-      if (name.isEmpty() && type == void.class && parameters == null && arguments == null) {
+      if ((name == null || name.isEmpty()) && type == void.class && parameters == null && arguments == null) {
         return root();
       }
       return new Element<>(name, type, parameters, arguments, false);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}.
+     *
+     * @param <U> the type of the {@link Element}
+     * 
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameter the sole parameter for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param argument the sole argument for the {@link Element}; may
+     * be {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final <U> Element<U> of(final String name,
                                           final Class<U> type,
                                           final Class<?> parameter,
                                           final String argument) {
-      if (name.isEmpty() && type == void.class && parameter == null && argument == null) {
-        return (Element<U>)root();
-      }
-      return new Element<>(name, type, List.of(parameter), List.of(argument), false);
+      return of(name, type, parameter == null ? null : List.of(parameter), argument == null ? null : List.of(argument));
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}.
+     *
+     * @param <U> the type of the {@link Element}
+     *
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameter the sole parameter for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param argument the sole argument for the {@link Element}; may
+     * be {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final <U> Element<U> of(final String name,
                                           final TypeToken<U> type,
                                           final Class<?> parameter,
                                           final String argument) {
-      final Type t = type.type();
-      if (name.isEmpty() && t == void.class && parameter == null && argument == null) {
-        return (Element<U>)root();
-      }
-      return new Element<>(name, type.type(), List.of(parameter), List.of(argument), false);
+      return of(name, type, parameter == null ? null : List.of(parameter), argument == null ? null : List.of(argument));
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}.
+     *
+     * @param name the name for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type for the {@link Element}; may be {@code
+     * null}
+     *
+     * @param parameter the sole parameter for the {@link Element}; may
+     * be {@code null}
+     *
+     * @param argument the sole argument for the {@link Element}; may
+     * be {@code null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, whose {@linkplain
+     * #parameters() parameters} will {@linkplain Optional#get()
+     * yield} the supplied {@code parameter}, and whose
+     * {@linkplain #arguments() arguments} will {@linkplain
+     * Optional#get() yield} the supplied {@code argument}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final Element<?> of(final String name,
                                       final Type type,
                                       final Class<?> parameter,
                                       final String argument) {
-      if (name.isEmpty() && type == void.class && parameter == null && argument == null) {
-        return root();
-      }
-      return new Element<>(name, type, List.of(parameter), List.of(argument), false);
+      return of(name, type, parameter == null ? null : List.of(parameter), argument == null ? null : List.of(argument));
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type}, {@linkplain #parameters()
+     * parameters} and {@linkplain #arguments() arguments} are
+     * {@linkplain Optional#isEmpty() empty}.
+     *
+     * @param name the name of the {@link Element}; may be {@code null}
+     *
+     * @return an {@link Element} whose whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type}, {@linkplain #parameters()
+     * parameters} and {@linkplain #arguments() arguments} are
+     * {@linkplain Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final Element<?> of(final String name) {
       return new Element<>(name, null, null, null, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}.
+     *
+     * @param <U> the type of the {@link Element}
+     *
+     * @param name the name of the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final String name, final Class<U> type) {
       if (name.isEmpty() && type == void.class) {
@@ -1152,6 +2332,36 @@ public final class Path<T> implements Iterable<Element<?>> {
       return new Element<>(name, type, null, null, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}.
+     *
+     * @param <U> the type of the {@link Element}
+     *
+     * @param name the name of the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final String name, final TypeToken<U> type) {
       final Type t = type.type();
@@ -1161,6 +2371,34 @@ public final class Path<T> implements Iterable<Element<?>> {
       return new Element<>(name, t, null, null, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}.
+     *
+     * @param name the name of the {@link Element}; may be {@code
+     * null}
+     *
+     * @param type the type of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} will
+     * {@linkplain Optional#get() yield} the supplied {@code name},
+     * whose {@linkplain #type() type} will {@linkplain Optional#get()
+     * yield} the supplied {@code type}, and whose {@linkplain
+     * #parameters() parameters} and {@linkplain #arguments()
+     * arguments} are {@linkplain Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final Element<?> of(final String name, final Type type) {
       if (name.isEmpty() && type == void.class) {
         return root();
@@ -1168,6 +2406,33 @@ public final class Path<T> implements Iterable<Element<?>> {
       return new Element<>(name, type, null, null, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}.
+     *
+     * @param <U> the type of the {@link Element}
+     *
+     * @param type the type of of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final Class<U> type) {
       if (type == void.class) {
@@ -1176,6 +2441,33 @@ public final class Path<T> implements Iterable<Element<?>> {
       return new Element<>("", type, null, null, false);
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}.
+     *
+     * @param <U> the type of the {@link Element}
+     *
+     * @param type the type of of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     @SuppressWarnings("unchecked")
     public static final <U> Element<U> of(final TypeToken<U> type) {
       final Type t = type.type();
@@ -1186,6 +2478,31 @@ public final class Path<T> implements Iterable<Element<?>> {
       }
     }
 
+    /**
+     * Returns an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}.
+     *
+     * @param type the type of of the {@link Element}; may be {@code
+     * null}
+     *
+     * @return an {@link Element} whose {@linkplain #name() name} is
+     * {@linkplain String#isEmpty() empty}, whose {@linkplain #type()
+     * type} will {@linkplain Optional#get() yield} the supplied
+     * {@code type}, and whose {@linkplain #parameters() parameters}
+     * and {@linkplain #arguments() arguments} are {@linkplain
+     * Optional#isEmpty() empty}
+     *
+     * @nullability This method never returns {@code null}.
+     *
+     * @idempotency This method is idempotent and deterministic.
+     *
+     * @threadsafety This method is safe for concurrent use by
+     * multiple threads.
+     */
     public static final Element<?> of(final Type type) {
       return type instanceof Class<?> c ? of(c) : new Element<>("", type, null, null, false);
     }

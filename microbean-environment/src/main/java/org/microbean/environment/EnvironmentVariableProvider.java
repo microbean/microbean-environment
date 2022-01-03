@@ -25,14 +25,71 @@ import org.microbean.environment.api.Qualifiers;
 import org.microbean.environment.provider.AbstractProvider;
 import org.microbean.environment.provider.Value;
 
+/**
+ * An {@link AbstractProvider} that provides access to {@linkplain
+ * System#getenv(String) environment variables}.
+ *
+ * @author <a href="https://about.me/lairdnelson"
+ * target="_parent">Laird Nelson</a>
+ */
 public final class EnvironmentVariableProvider extends AbstractProvider<String> {
 
+
+  /*
+   * Constructors.
+   */
+
+  
+  /**
+   * Creates a new {@link EnvironmentVariableProvider}.
+   */
   public EnvironmentVariableProvider() {
     super();
   }
 
+
+  /*
+   * Instance methods.
+   */
+  
+
+  /**
+   * If the supplied {@code absolutePath} has a {@linkplain
+   * Path#size() size} of {@code 2} (the {@linkplain Path#root() root}
+   * plus a single name), returns a {@linkplain Value#deterministic()
+   * deterministic <code>Value</code>} whose {@link Value#get()}
+   * method returns the {@linkplain System#getenv(String) environment
+   * variable} with that name, or {@code null} in all other cases.
+   *
+   * @param requestor the {@link Loader} requesting a {@link Value};
+   * must not be {@code null}
+   *
+   * @param absolutePath an {@linkplain Path#isAbsolute() absolute}
+   * {@link Path}; must not be {@code null}
+   *
+   * @return a {@linkplain Value#deterministic() deterministic} {@link
+   * Value} whose {@link Value#get()} method returns the appropriate
+   * {@linkplain System#getenv(String) environment variable} if the
+   * supplied {@code absolutePath} has a {@linkplain Path#size() size}
+   * of {@code 2} (the {@linkplain Path#root() root} plus a single
+   * name) and there actually is a {@linkplain System#getenv(String)
+   * corresponding environment variable}; {@code null} in all other
+   * cases
+   *
+   * @nullability This method may return {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic during
+   * the lifetime of a Java virtual machine instance.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @exception NullPointerException if {@code requestor} or {@code
+   * absolutePath} is {@code null}
+   */
   @Override // AbstractProvider<String>
-  public <T> Value<T> get(final Loader<?> requestor, final Path<T> absolutePath) {
+  @SuppressWarnings("unchecked")
+  public final <T> Value<T> get(final Loader<?> requestor, final Path<T> absolutePath) {
     assert absolutePath.isAbsolute();
     assert absolutePath.startsWith(requestor.absolutePath());
     assert !absolutePath.equals(requestor.absolutePath());
@@ -54,19 +111,16 @@ public final class EnvironmentVariableProvider extends AbstractProvider<String> 
     // "foo" if ever there was one, and will always return null if
     // there wasn't.
 
-    if (absolutePath.size() == 2) {
-      final String name = absolutePath.last().name();
-      final String value = System.getenv(name);
+    if (absolutePath.size() == 2) { // 2: root plus a single name
+      final String value = System.getenv(absolutePath.last().name());
       if (value != null) {
-        @SuppressWarnings("unchecked")
-        final Value<T> returnValue =
+        return
           new Value<>(null, // no defaults
                       Qualifiers.of(),
                       absolutePath,
                       (Supplier<T>)() -> (T)value,
                       false, // nulls are not permitted
                       true); // deterministic
-        return returnValue;
       }
     }
     return null;

@@ -133,8 +133,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
   public Path<T> absolutePath();
 
   /**
-   * Returns a {@link Loader} that can supply environmental objects
-   * that are suitable for the supplied {@code path}.
+   * Returns a {@link Loader} that can {@linkplain #get() supply}
+   * environmental objects that are suitable for the supplied {@code
+   * path}.
    *
    * <p>After {@linkplain #loader() bootstrapping}, this method serves as
    * the main entry point into this framework.</p>
@@ -164,9 +165,9 @@ public interface Loader<T> extends OptionalSupplier<T> {
    * @param path the {@link Path} for which a {@link Loader}
    * should be returned; must not be {@code null}
    *
-   * @return a {@link Loader} capable of supplying environmental
-   * objects suitable for the supplied {@code path}; never {@code
-   * null}
+   * @return a {@link Loader} capable of {@linkplain #get() supplying}
+   * environmental objects suitable for the supplied {@code path};
+   * never {@code null}
    *
    * @exception NullPointerException if {@code path} is {@code null}
    *

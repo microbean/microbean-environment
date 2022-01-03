@@ -1,6 +1,6 @@
 /* -*- mode: Java; c-basic-offset: 2; indent-tabs-mode: nil; coding: utf-8-unix -*-
  *
- * Copyright © 2021 microBean™.
+ * Copyright © 2021–2022 microBean™.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public final class Value<T> implements Supplier<T> {
   private final Supplier<? extends T> supplier;
 
   private final boolean nullsPermitted;
-  
+
   private final boolean deterministic;
 
 
@@ -75,6 +75,29 @@ public final class Value<T> implements Supplier<T> {
    */
 
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with the supplied arguments,
+   * {@code null} for the value of the {@code defaults} parameter,
+   * {@code true} for the value of the {@code nullsPermitted}
+   * parameter and {@code true} for the value of the {@code
+   * deterministic} parameter.</p>
+   *
+   * @param qualifiers the {@link Qualifiers} for which this {@link
+   * Value} is suitable; must not be {@code null}
+   *
+   * @param path the {@link Path}, possibly {@linkplain
+   * Path#isRelative() relative}, for which this {@link Value} is
+   * suitable; must not be {@code null}
+   *
+   * @param value the value that will be returned by the {@link
+   * #get()} method; may be {@code null}
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Qualifiers qualifiers,
                final Path<T> path,
                final T value) {
@@ -84,6 +107,29 @@ public final class Value<T> implements Supplier<T> {
     this(null, qualifiers, path, () -> value, true, true);
   }
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with the supplied arguments,
+   * {@code null} for the value of the {@code defaults} parameter,
+   * {@code true} for the value of the {@code nullsPermitted}
+   * parameter and {@code false} for the value of the {@code
+   * deterministic} parameter.</p>
+   *
+   * @param qualifiers the {@link Qualifiers} for which this {@link
+   * Value} is suitable; must not be {@code null}
+   *
+   * @param path the {@link Path}, possibly {@linkplain
+   * Path#isRelative() relative}, for which this {@link Value} is
+   * suitable; must not be {@code null}
+   *
+   * @param supplier the actual {@link Supplier} that will return
+   * values; must not be {@code null}
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Qualifiers qualifiers,
                final Path<T> path,
                final Supplier<? extends T> supplier) {
@@ -93,6 +139,34 @@ public final class Value<T> implements Supplier<T> {
     this(null, qualifiers, path, supplier, true, false);
   }
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with the supplied arguments and
+   * {@code null} for the value of the {@code defaults} parameter.</p>
+   *
+   * @param qualifiers the {@link Qualifiers} for which this {@link
+   * Value} is suitable; must not be {@code null}
+   *
+   * @param path the {@link Path}, possibly {@linkplain
+   * Path#isRelative() relative}, for which this {@link Value} is
+   * suitable; must not be {@code null}
+   *
+   * @param supplier the actual {@link Supplier} that will return
+   * values; must not be {@code null}
+   *
+   * @param nullsPermitted whether {@code null} values returned from
+   * the {@link #get()} method are legal values or indicate the
+   * (possibly transitory) absence of a value
+   *
+   * @param deterministic a {@code boolean} indicating whether the
+   * supplied {@code supplier} returns a singleton from its {@link
+   * Supplier#get()} method
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Qualifiers qualifiers,
                final Path<T> path,
                final Supplier<? extends T> supplier,
@@ -104,6 +178,33 @@ public final class Value<T> implements Supplier<T> {
     this(null, qualifiers, path, supplier, nullsPermitted, deterministic);
   }
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with the supplied arguments and
+   * {@code true} for the value of the {@code nullsPermitted}
+   * parameter and {@code false} for the value of the {@code
+   * deterministic} parameter.</p>
+   *
+   * @param defaults a {@link Supplier} to be used in case this {@link
+   * Value}'s {@link #get()} method throws either a {@link
+   * NoSuchElementException} or an {@link
+   * UnsupportedOperationException}; may be {@code null}
+   *
+   * @param qualifiers the {@link Qualifiers} for which this {@link
+   * Value} is suitable; must not be {@code null}
+   *
+   * @param path the {@link Path}, possibly {@linkplain
+   * Path#isRelative() relative}, for which this {@link Value} is
+   * suitable; must not be {@code null}
+   *
+   * @param supplier the actual {@link Supplier} that will return
+   * values; must not be {@code null}
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Supplier<? extends T> defaults,
                final Qualifiers qualifiers,
                final Path<T> path,
@@ -111,11 +212,47 @@ public final class Value<T> implements Supplier<T> {
     this(defaults, qualifiers, path, supplier, true, false);
   }
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with the value of the {@code
+   * defaults} parameter and arguments derived from the supplied {@code
+   * source}.</p>
+   *
+   * @param defaults a {@link Supplier} to be used in case this {@link
+   * Value}'s {@link #get()} method throws either a {@link
+   * NoSuchElementException} or an {@link
+   * UnsupportedOperationException}; may be {@code null}
+   *
+   * @param source the {@link Value} from which other arguments will
+   * be derived; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code source} is {@code null}
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Supplier<? extends T> defaults,
                final Value<T> source) {
     this(defaults, source.qualifiers(), source.path(), source, source.nullsPermitted(), source.deterministic());
   }
 
+  /**
+   * Creates a new {@link Value}.
+   *
+   * <p>Calls the {@link #Value(Supplier, Qualifiers, Path, Supplier,
+   * boolean, boolean)} constructor with no defaults and arguments
+   * derived from the supplied {@code source}.</p>
+   *
+   * @param source the {@link Value} from which other arguments will
+   * be derived; must not be {@code null}
+   *
+   * @exception NullPointerException if {@code source} is {@code null}
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public Value(final Value<T> source) {
     // Because defaults are null, it actually doesn't matter what the
     // trailing two booleans are for anything other than informational
@@ -254,10 +391,44 @@ public final class Value<T> implements Supplier<T> {
    */
 
 
+  /**
+   * Returns the {@link Qualifiers} with which this {@link Value} is
+   * associated.
+   *
+   * @return the {@link Qualifiers} with which this {@link Value} is
+   * associated
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public final Qualifiers qualifiers() {
     return this.qualifiers;
   }
 
+  /**
+   * Returns the {@link Path} with which this {@link Value} is
+   * associated.
+   *
+   * @return the {@link Path} with which this {@link Value} is
+   * associated
+   *
+   * @nullability This method never returns {@code null}.
+   *
+   * @idempotency This method is idempotent and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by multiple
+   * threads.
+   *
+   * @see #Value(Supplier, Qualifiers, Path, Supplier, boolean,
+   * boolean)
+   */
   public final Path<T> path() {
     return this.path;
   }
@@ -327,7 +498,7 @@ public final class Value<T> implements Supplier<T> {
   public final boolean nullsPermitted() {
     return this.nullsPermitted;
   }
-  
+
   /**
    * Returns {@code true} if and only if it is known that the {@link
    * Supplier} supplied at {@linkplain #Value(Supplier, Qualifiers,
@@ -406,6 +577,30 @@ public final class Value<T> implements Supplier<T> {
     return this.path().typeErasure();
   }
 
+  /**
+   * Returns a hashcode for this {@link Value} calculated from its
+   * {@link #qualifiers() Qualifiers}, its {@link #path() Path},
+   * {@linkplain #nullsPermitted() whether it permits
+   * <code>null</code>s} and {@linkplain #deterministic() whether it
+   * is deterministic}.
+   *
+   * @return a hashcode for this {@link Value}
+   *
+   * @idempotency This method is idempotent and and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by
+   * multiple threads.
+   *
+   * @see #equals(Object)
+   *
+   * @see #path()
+   *
+   * @see #qualifiers()
+   *
+   * @see #nullsPermitted()
+   *
+   * @see #deterministic()
+   */
   @Override // Object
   public final int hashCode() {
     int hashCode = 17;
@@ -419,13 +614,60 @@ public final class Value<T> implements Supplier<T> {
 
     c = this.nullsPermitted() ? 1 : 0;
     hashCode = 37 * hashCode + c;
-    
+
     c = this.deterministic() ? 1 : 0;
     hashCode = 37 * hashCode + c;
 
     return hashCode;
   }
 
+  /**
+   * Returns {@code true} if this {@link Value} is equal to the
+   * supplied {@link Object}.
+   *
+   * <p>This method will return {@code true} if and only if the
+   * following conditions hold:</p>
+   *
+   * <ul>
+   *
+   * <li>The supplied {@link Object} is not {@code null}</li>
+   *
+   * <li>The supplied {@link Object}'s {@link Object#getClass()}
+   * method returns {@link Value Value.class}</li>
+   *
+   * <li>{@link Objects#equals(Object, Object)
+   * Objects.equals(this.qualifiers(), otherValue.qualifiers())} returns
+   * {@code true}</li>
+   *
+   * <li>{@link Objects#equals(Object, Object)
+   * Objects.equals(this.path(), otherValue.path())} returns {@code
+   * true}</li>
+   *
+   * <li>{@code this.nullsPermitted() &amp;&amp;
+   * otherValue.nullsPermitted() &amp;&amp; this.deterministic()
+   * &amp;&amp; otherValue.deterministic()} is {@code true}</li>
+   *
+   * </ul>
+   *
+   * @param other the {@link Object} to test; may be {@code null} in
+   * which case {@code false} will be returned
+   *
+   * @return {@code true} if this {@link Value} is equal to the
+   * supplied {@link Object}; {@code false} otherwise
+   *
+   * @idempotency This method is idempotent and and deterministic.
+   *
+   * @threadsafety This method is safe for concurrent use by
+   * multiple threads.
+   *
+   * @see #qualifiers()
+   *
+   * @see #path()
+   *
+   * @see #nullsPermitted()
+   *
+   * @see deterministic()
+   */
   @Override // Object
   public final boolean equals(final Object other) {
     if (other == this) {
