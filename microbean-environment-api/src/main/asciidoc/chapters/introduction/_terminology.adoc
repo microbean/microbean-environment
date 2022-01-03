@@ -10,6 +10,16 @@ is only for the purposes of this specification and no other purposes.
 .Notional Ontology
 image::ConfigurationOntology.png[]
 
+[#advertise]
+==== Advertise
+
+To publish what kind of <<configuration,configuration>> a
+<<configuration_author>> must author or otherwise account for to
+satisfy the needs of a given <<component,component>>.
+
+The <<component_developer>> role is responsible for advertising her
+<<component,components'>> <<configuration,configurations>>.
+
 [#application]
 ==== Application
 
@@ -154,6 +164,16 @@ start such a deployed <<application,application>>.
 The notional result of <<deploy,deploying>> an
 (<<assemble,assembled>>) <<application,application>> that is ready to
 start.
+
+[#discover]
+==== Discover
+
+To become aware of the result of an <<advertise,advertisement>> (by a
+<<component_developer>> of a <<component,component's>>
+<<configuration>> needs.
+
+<<configuration_author,Configuration Authors>> discover
+<<configuration,configuration>> <<advertise,advertisements>>.
 
 [#environment]
 ==== Environment

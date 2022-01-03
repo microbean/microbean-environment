@@ -9,7 +9,7 @@ for:
  ** <<environment_model_acquisition,acquire>> Java objects from
     <<environment,environments>>
 
- ** advertise the
+ ** <<advertise,advertise>> the
     <<configuration,configuration>> her <<component,component>> needs
 
  * an <<application_assembler>> to use in order to
@@ -21,8 +21,8 @@ for:
    <<configuration_system,configuration system>> to a conforming
    implementation of this specification
 
- * a <<configuration_author>> to use in order to discover and create
-   proper <<configuration,configurations>> for a given
+ * a <<configuration_author>> to use in order to <<discover,discover>>
+   and create proper <<configuration,configurations>> for a given
    <<deploy,deployment>> of an <<application,application>> into an
    <<environment,environment>> containing those
    <<configuration,configurations>>

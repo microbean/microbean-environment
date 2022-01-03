@@ -18,8 +18,8 @@ role, even at a time.
    <<component,component>> does not have to have its code changed when
    the values from which those objects are composited change.
    
- * _Advertises_ <<configuration,configuration>> information that her
-   <<component,components>> will consult.
+ * <<advertise,_Advertises_>> <<configuration,configuration>>
+   information that her <<component,components>> will consult.
 
 Roles that are interested in the <<component,components>> the
 <<component_developer>> produces include the <<application_assembler>>
@@ -60,10 +60,10 @@ include the <<application_deployer>> and the <<configuration_author>>.
    <<configuration,configuration>> for a particular
    <<environment,environment>>.
 
- * _Discovers_ <<configuration,configuration>> information advertised
-   by the <<component_developer>> for a given <<component,component>>
-   in order to understand what <<configuration,configuration>> values
-   need to be present.
+ * _Discovers_ <<configuration,configuration>> information
+   <<advertise,advertised>> by the <<component_developer>> for a given
+   <<component,component>> in order to understand what
+   <<configuration,configuration>> values need to be present.
 
  * Understands her <<configuration_system,configuration system>> and
    its authoring tools.

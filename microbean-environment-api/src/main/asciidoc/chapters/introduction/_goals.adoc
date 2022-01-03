@@ -63,9 +63,9 @@ Java 9 Compatibility::
 Configuration Discoverability::
 
  * A <<configuration,configuration>> that an application
-   <<component,component>> needs should be discoverable in some way,
-   perhaps with unspecified or vendor-defined tooling, by a
-   <<configuration_author>> without requiring the
+   <<component,component>> needs should be <<discover,discoverable>>
+   in some way, perhaps with unspecified or vendor-defined tooling, by
+   a <<configuration_author>> without requiring the
    <<component,component's>> source code.
 
 Separation of Concerns::
